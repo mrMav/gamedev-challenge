@@ -1,4 +1,4 @@
-[submodule "external"]
-	path = external
+[submodule "external/simple-cpp-engine"]
+	path = external/simple-cpp-engine
 	url = https://github.com/mrMav/simple-cpp-engine.git
 	branch = develop
