@@ -25,6 +25,7 @@ namespace MyChallengeGame
         Spritebatch* spritebatch;
         Shader* shader;
         Texture2D* dude;
+        Texture2D* spritesheet;
         Camera2D* camera;
         BitmapFont* font;
 
@@ -51,7 +52,7 @@ namespace MyChallengeGame
         public:
         
         ChallengeGame(uint32_t screenWidth, uint32_t screenHeight, const char* windowTitle)
-        : Game(screenWidth, screenHeight, windowTitle), positions(MAX_INDEX)
+        : Game(screenWidth, screenHeight, windowTitle), positions(MAX_INDEX + 1)
         {
             
         }
@@ -62,6 +63,7 @@ namespace MyChallengeGame
             delete spritebatch;
             delete camera;
             delete font;
+            delete spritesheet;
         }
 
         void Run() override
@@ -81,6 +83,8 @@ namespace MyChallengeGame
             shader = new Shader("Shaders/vertex.vert", "Shaders/fragment.frag");
             shader->use();
             dude = new Texture2D("Shaders/dude1.png", {});
+            //spritesheet = new Texture2D("assets/chips.png", {GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR, true});
+            spritesheet = new Texture2D("assets/chips.png", {});
 
             camera = new Camera2D(GetViewport());
             camera->Position.x = 0;
@@ -207,7 +211,7 @@ namespace MyChallengeGame
             }
 
             spritebatch->Begin(shader, camera, glm::vec4(0, 1, 0, 1));
-            spritebatch->Draw(dude, moving_dude_x, -100);
+            spritebatch->Draw(spritesheet, 64, 64, {0, 0, 64, 64});
             spritebatch->End();
 
             spritebatch->Begin(shader, camera, glm::vec4(0, 1, 0, 1), 0, true);

@@ -4,6 +4,8 @@ set (CMAKE_CXX_STANDARD 17)
 
 project(gamedev-challenge)
 
+option(COPY_ASSETS "Copy asset folder to build folder." ON)
+
 add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCE})
 
 #specifies that we also have work to do on this directory
@@ -26,16 +28,21 @@ target_link_libraries(${PROJECT_NAME} simple-cpp-engine)
 add_dependencies(${PROJECT_NAME} simple-cpp-engine)
 
 
-# set(TESTNAME game-class)
+if(COPY_ASSETS)
 
-# add_executable(${TESTNAME} GameClass.cpp TestGame.h)
+    #copy the shader source to the target folder
+    set(ASSET_LIST
+        ${CMAKE_CURRENT_LIST_DIR}/assets/chips.png
+    )
 
-# target_include_directories(${TESTNAME}
-#     PUBLIC ../../src
-# )
+    set(ASSETS_DIR ${CMAKE_BINARY_DIR}/assets)
 
-# target_link_directories(${TESTNAME} PRIVATE src/simple-cpp-engine)
+    add_custom_target(COPY_ASSETS_
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${ASSETS_DIR}            
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ASSET_LIST} ${ASSETS_DIR}
+        COMMENT "Copying asset files to build..."
+    )
 
-# target_link_libraries(${TESTNAME} simple-cpp-engine)
+    add_dependencies(gamedev-challenge COPY_ASSETS_)
 
-# add_dependencies(${TESTNAME} simple-cpp-engine)
+endif(COPY_ASSETS)
