@@ -6,11 +6,18 @@
 #include <math.h>
 
 #include <Engine.h>
+#include "../external/tweeny-3.2.0.h"
+
 
 using namespace Engine;
 
 namespace MyChallengeGame
 {
+
+    enum Direction
+    {
+        Left = 0, Up, Right, Down
+    };
 
     class ChallengeGame : Game
     {
@@ -19,20 +26,42 @@ namespace MyChallengeGame
         Shader* shader;
         Texture2D* dude;
         Camera2D* camera;
+        BitmapFont* font;
+
 
         glm::vec2 dude_position = glm::vec2(0, 0);
+
+        glm::vec2 centerCoord = glm::vec2(0, 0);
+
+        const int MAX_INDEX = 48;
+        std::vector<glm::vec2> positions;
+
+        int tintIndex = 0;
+
+        int updateCurrentIndex = 0;
+        bool doUpdate = false;
+        int updateDirectionLoopCounter = 1;
+        int updateDirectionLoopIndex = 0;
+        int updateDirectionChanges = 0;
+
+        float moving_dude_x = -200.0f;
+        tweeny::tween<float> position_tween = tweeny::from(moving_dude_x).to(100.0f).during(50000).via(tweeny::easing::circularInOut);
+        bool updateTween = false;
 
         public:
         
         ChallengeGame(uint32_t screenWidth, uint32_t screenHeight, const char* windowTitle)
-        : Game(screenWidth, screenHeight, windowTitle)
+        : Game(screenWidth, screenHeight, windowTitle), positions(MAX_INDEX)
         {
-
+            
         }
         ~ChallengeGame()
         {
             delete shader;
             delete dude;
+            delete spritebatch;
+            delete camera;
+            delete font;
         }
 
         void Run() override
@@ -47,6 +76,8 @@ namespace MyChallengeGame
         {
             glClearColor(0.392, 0.584, 0.929, 1);  // good ol' cornflower blue
 
+            font = new BitmapFont("Shaders/mbf_big_00.png", 10, 12);
+
             shader = new Shader("Shaders/vertex.vert", "Shaders/fragment.frag");
             shader->use();
             dude = new Texture2D("Shaders/dude1.png", {});
@@ -58,6 +89,34 @@ namespace MyChallengeGame
             camera->Zoom = 2.0f;
 
             spritebatch = new Spritebatch();
+
+            // let's try to make our little animation
+
+            int indexNumber = 0;
+            
+            int directionLoopCounter = 1;
+            int directionChanges = 0;
+
+            Direction directions[] = {Direction::Right, Direction::Down, Direction::Left, Direction::Up};
+            Direction currentDirection = directions[0];
+
+            while(indexNumber < MAX_INDEX)
+            {
+                currentDirection = directions[(directionChanges % 4)]; // 4 possible directions
+
+                for(int i = 0; i < directionLoopCounter; i++)
+                {
+                    //Move(indexNumber, currentDirection);
+                    PlaceSquare(indexNumber,currentDirection);
+                    indexNumber++;
+                }
+
+                directionChanges++;
+
+                if(directionChanges % 2 == 0)
+                    directionLoopCounter++;
+
+            }
             
         }
 
@@ -70,8 +129,64 @@ namespace MyChallengeGame
         {
             camera->Update(delta);
 
-            dude_position.x = GetViewport().HalfWidth();
-            dude_position.y = GetViewport().HalfHeight();
+            
+            if(Input::IsKeyJustDown(Key::Enter))
+            {
+                doUpdate = true;
+
+                // reset 
+                if(updateCurrentIndex >= MAX_INDEX)
+                {
+                    doUpdate = false;
+                    // no more animation
+                }
+
+            }
+
+            if(updateTween)
+            {
+                int dt = delta * 10000;
+                moving_dude_x = position_tween.step(dt);
+
+            }
+
+            if(Input::IsKeyJustDown(Key::M))
+            {
+                moving_dude_x = -200.0f;
+                position_tween = tweeny::from(moving_dude_x).to(200.0f - 24.0f).during(50000).via(tweeny::easing::backOut);
+                updateTween = true;
+                tintIndex++;
+            }
+
+            if(doUpdate)
+            {
+
+                Direction directions[] = {Direction::Left, Direction::Up, Direction::Right, Direction::Down};
+                Direction currentDirection = directions[0];
+
+                currentDirection = directions[(updateDirectionChanges % 4)]; // 4 possible directions
+
+                if(updateDirectionLoopIndex < updateDirectionLoopCounter)
+                {
+                    MoveSquare(updateCurrentIndex, currentDirection);
+                    
+                    updateCurrentIndex++;
+                    updateDirectionLoopIndex++;
+
+                }
+                
+                if(updateDirectionLoopIndex >= updateDirectionLoopCounter)
+                {
+                    updateDirectionChanges++;
+                    updateDirectionLoopIndex = 0;
+
+                    if(updateDirectionChanges % 2 == 0)
+                        updateDirectionLoopCounter++;
+                }
+
+                doUpdate = false;
+            }
+
         }
 
         /*
@@ -81,14 +196,77 @@ namespace MyChallengeGame
         void Render(float delta) override
         {
             glClear(GL_COLOR_BUFFER_BIT);
+            
+            for(int i = 0; i < MAX_INDEX; i++)
+            {
+                glm::vec4 tint = i == (tintIndex % MAX_INDEX) ? glm::vec4(1, 0, 0, 1) : glm::vec4(1);
 
+                spritebatch->Begin(shader, camera, tint);
+                spritebatch->Draw(dude, positions[i].x, positions[i].y);
+                spritebatch->End();
+            }
 
-            spritebatch->Begin(shader, camera, 0);
-            spritebatch->Draw(dude, dude_position.x, dude_position.y, 0);
+            spritebatch->Begin(shader, camera, glm::vec4(0, 1, 0, 1));
+            spritebatch->Draw(dude, moving_dude_x, -100);
+            spritebatch->End();
+
+            spritebatch->Begin(shader, camera, glm::vec4(0, 1, 0, 1), 0, true);
+            spritebatch->SetCustomView(glm::scale(glm::mat4(1), glm::vec3(4)));
+            spritebatch->DrawString(font, 12, 12, std::to_string(60.0f / (delta*1000.0f)).c_str());
             spritebatch->End();
 
         }
 
+        void Move(int index, int direction)
+        {
+            printf("Index: %d moves in direction %d\n", index, direction);
+        }
+
+        void PlaceSquare(int index, Direction direction)
+        {
+            if(index > 0)
+                positions[index] = positions[index - 1];
+
+            if(direction == Direction::Left)
+            {
+                positions[index].x -= dude->GetWidth();     
+            }
+            if(direction == Direction::Right)
+            {
+                positions[index].x += dude->GetWidth();     
+            }
+            if(direction == Direction::Up)
+            {
+                positions[index].y -= dude->GetHeight();     
+            }
+            if(direction == Direction::Down)
+            {
+                positions[index].y += dude->GetHeight();     
+            }
+        }
+
+        void MoveSquare(int index, Direction direction)
+        {
+
+            //printf("Moving index %d in direction %d\n", index, direction);
+
+            if(direction == Direction::Left)
+            {
+                positions[index].x -= dude->GetWidth();     
+            }
+            if(direction == Direction::Right)
+            {
+                positions[index].x += dude->GetWidth();     
+            }
+            if(direction == Direction::Up)
+            {
+                positions[index].y -= dude->GetHeight();     
+            }
+            if(direction == Direction::Down)
+            {
+                positions[index].y += dude->GetHeight();     
+            }
+        }
 
     };
 

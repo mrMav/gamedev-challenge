@@ -10,6 +10,7 @@ add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCE})
 add_subdirectory(src)
 
 # build librarires
+add_subdirectory(external)
 add_subdirectory(external/simple-cpp-engine)
 
 target_include_directories(${PROJECT_NAME}
