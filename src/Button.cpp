@@ -4,6 +4,12 @@
 
 namespace MyChallengeGame
 {
+
+    Button::Button()
+    {
+        
+    }
+
     Button::Button(int32_t x, int32_t y, Texture2D* texture, Rectangle<int> clipRect, std::function<void()> callback)
         : m_Texture(texture), m_clipRect(clipRect)
     {

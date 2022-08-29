@@ -14,6 +14,7 @@ namespace MyChallengeGame
 
         glm::vec2 position;
 
+        Button();
         Button(int32_t x, int32_t y, Texture2D* texture, Rectangle<int> clipRect, std::function<void()> callback = nullptr);
         ~Button();
 
@@ -23,11 +24,11 @@ namespace MyChallengeGame
 
         private:
 
-        Texture2D* m_Texture;
-        Rectangle<int> m_clipRect;
+        Texture2D* m_Texture = nullptr;
+        Rectangle<int> m_clipRect = {0, 0, 0, 0};
 
-        int m_ButtonWidth;
-        int m_ButtonHeight;
+        int m_ButtonWidth = 0;
+        int m_ButtonHeight = 0;
 
         std::function<void()> m_callback;
 

@@ -30,11 +30,15 @@ namespace MyChallengeGame
         Texture2D* spritesheet;
         Camera2D* camera;
         BitmapFont* font;
-        Button* button;
+
+        Button playButton;
+        Button creditsInButton;
+        Button creditsOutButton;
 
         glm::vec2 dude_position = glm::vec2(0, 0);
 
-        glm::vec2 centerCoord = glm::vec2(0, 0);
+        glm::vec2 gameBoardCenter = glm::vec2(-32, -340+224);
+        glm::vec2 gamePieceSize = glm::vec2(64, 64);
 
         const int MAX_INDEX = 48;
         std::vector<glm::vec2> positions;
@@ -51,6 +55,11 @@ namespace MyChallengeGame
         tweeny::tween<float> position_tween = tweeny::from(moving_dude_x).to(100.0f).during(50000).via(tweeny::easing::circularInOut);
         bool updateTween = false;
 
+        /* Game state */
+
+        int gameplayCounter = 0;
+        int creditsCounter = 0;
+
         public:
         
         ChallengeGame(uint32_t screenWidth, uint32_t screenHeight, const char* windowTitle)
@@ -66,7 +75,6 @@ namespace MyChallengeGame
             delete camera;
             delete font;
             delete spritesheet;
-            delete button;
         }
 
         void Run() override
@@ -86,23 +94,43 @@ namespace MyChallengeGame
             shader = new Shader("Shaders/vertex.vert", "Shaders/fragment.frag");
             shader->use();
             dude = new Texture2D("Shaders/dude1.png", {});
-            //spritesheet = new Texture2D("assets/chips.png", {GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR, true});
             spritesheet = new Texture2D("assets/chips.png", {});
 
             camera = new Camera2D(GetViewport());
             camera->Position.x = 0;
             camera->Position.y = 0;
             camera->Position.z = 1.0f;
-            camera->Zoom = 2.0f;
+            camera->Zoom = 1.0f;
 
             spritebatch = new Spritebatch();
-            button = new Button(0, 0, spritesheet, {64, 0, 108, 48},
+
+            /* create some buttons */
+
+            playButton = Button(GetViewport().HalfWidth() * -1 + 36, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64, 0, 128, 64},
                 [=]()-> void
                 {
-                    std::cout << "clicked on button" << std::endl;
+                    std::cout << "clicked on button play" << std::endl;
                     tintIndex++;
+                    creditsCounter = std::max(0, creditsCounter - 1);
+                    gameplayCounter++;
                 }
-            ); 
+            );
+
+            creditsInButton = Button(GetViewport().HalfWidth() - 128 * 2 - 36, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64 + 128, 0, 128, 64},
+                [=]()-> void
+                {
+                    std::cout << "clicked on credits in" << std::endl;
+                    creditsCounter++;
+                }
+            );
+
+            creditsOutButton = Button(GetViewport().HalfWidth() - 128 - 36, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64 + 128, 64, 128, 64},
+                [=]()-> void
+                {
+                    std::cout << "clicked on credits out" << std::endl;
+                    creditsCounter = 0;
+                }
+            );
 
             // let's try to make our little animation
 
@@ -121,7 +149,7 @@ namespace MyChallengeGame
                 for(int i = 0; i < directionLoopCounter; i++)
                 {
                     //Move(indexNumber, currentDirection);
-                    PlaceSquare(indexNumber,currentDirection);
+                    PlaceSquare(indexNumber, currentDirection);
                     indexNumber++;
                 }
 
@@ -142,7 +170,9 @@ namespace MyChallengeGame
         void Update(float delta) override
         {
             camera->Update(delta);
-            button->Update(camera, delta);
+            playButton.Update(camera, delta);
+            creditsInButton.Update(camera, delta);
+            creditsOutButton.Update(camera, delta);
             
             if(Input::IsKeyJustDown(Key::Enter))
             {
@@ -216,18 +246,31 @@ namespace MyChallengeGame
                 glm::vec4 tint = i == (tintIndex % MAX_INDEX) ? glm::vec4(1, 0, 0, 1) : glm::vec4(1);
 
                 spritebatch->Begin(shader, camera, tint);
-                spritebatch->Draw(dude, positions[i].x, positions[i].y);
+                spritebatch->Draw(spritesheet, positions[i].x, positions[i].y, {0, 0, 64, 64});
                 spritebatch->End();
             }
 
             spritebatch->Begin(shader, camera, glm::vec4(1));
-            spritebatch->Draw(spritesheet, 64, 64, {0, 0, 64, 64});
-            button->Draw(spritebatch, delta);
+            playButton.Draw(spritebatch, delta);
+            creditsInButton.Draw(spritebatch, delta);
+            creditsOutButton.Draw(spritebatch, delta);
             spritebatch->End();
 
+            // framerate counter
             spritebatch->Begin(shader, camera, glm::vec4(0, 1, 0, 1), 0, true);
             spritebatch->SetCustomView(glm::scale(glm::mat4(1), glm::vec3(4)));
-            spritebatch->DrawString(font, 12, 12, std::to_string(60.0f / (delta*1000.0f)).c_str());
+            spritebatch->DrawString(font, 1, 1, std::to_string(60.0f / (delta*1000.0f)).c_str());
+            spritebatch->End();
+
+            // game state render
+            float scale = 2.0f;
+            spritebatch->Begin(shader, camera, glm::vec4(1), 0, true);
+            spritebatch->SetCustomView(glm::scale(glm::mat4(1), glm::vec3(scale)));
+            //spritebatch->DrawString(font, playButton.position.x, playButton.position.y - 16, (std::string("Number of plays: ") + std::to_string(gameplayCounter)).c_str());
+            glm::vec2 pos1 = camera->WorldToScreen(playButton.position.x, playButton.position.y - 64);
+            glm::vec2 pos2 = camera->WorldToScreen(creditsInButton.position.x + 60, creditsInButton.position.y - 44);
+            spritebatch->DrawString(font, pos1.x / scale, pos1.y / scale, (std::string("Number of\nplays: ") + std::to_string(gameplayCounter)).c_str());
+            spritebatch->DrawString(font, pos2.x / scale, pos2.y / scale, (std::string("Credits: ") + std::to_string(creditsCounter)).c_str());
             spritebatch->End();
 
         }
@@ -241,22 +284,24 @@ namespace MyChallengeGame
         {
             if(index > 0)
                 positions[index] = positions[index - 1];
+            else
+                positions[index] = gameBoardCenter;
 
             if(direction == Direction::Left)
             {
-                positions[index].x -= dude->GetWidth();     
+                positions[index].x -= gamePieceSize.x;
             }
             if(direction == Direction::Right)
             {
-                positions[index].x += dude->GetWidth();     
+                positions[index].x += gamePieceSize.x;  
             }
             if(direction == Direction::Up)
             {
-                positions[index].y -= dude->GetHeight();     
+                positions[index].y -= gamePieceSize.y;
             }
             if(direction == Direction::Down)
             {
-                positions[index].y += dude->GetHeight();     
+                positions[index].y += gamePieceSize.y;
             }
         }
 
@@ -267,19 +312,19 @@ namespace MyChallengeGame
 
             if(direction == Direction::Left)
             {
-                positions[index].x -= dude->GetWidth();     
+                positions[index].x -= gamePieceSize.x;
             }
             if(direction == Direction::Right)
             {
-                positions[index].x += dude->GetWidth();     
+                positions[index].x += gamePieceSize.x;  
             }
             if(direction == Direction::Up)
             {
-                positions[index].y -= dude->GetHeight();     
+                positions[index].y -= gamePieceSize.y;
             }
             if(direction == Direction::Down)
             {
-                positions[index].y += dude->GetHeight();     
+                positions[index].y += gamePieceSize.y;
             }
         }
 
