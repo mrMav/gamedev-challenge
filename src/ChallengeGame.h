@@ -8,6 +8,8 @@
 #include <Engine.h>
 #include "../external/tweeny-3.2.0.h"
 
+#include "Button.h"
+
 
 using namespace Engine;
 
@@ -28,7 +30,7 @@ namespace MyChallengeGame
         Texture2D* spritesheet;
         Camera2D* camera;
         BitmapFont* font;
-
+        Button* button;
 
         glm::vec2 dude_position = glm::vec2(0, 0);
 
@@ -64,6 +66,7 @@ namespace MyChallengeGame
             delete camera;
             delete font;
             delete spritesheet;
+            delete button;
         }
 
         void Run() override
@@ -93,6 +96,13 @@ namespace MyChallengeGame
             camera->Zoom = 2.0f;
 
             spritebatch = new Spritebatch();
+            button = new Button(0, 0, spritesheet, {64, 0, 108, 48},
+                [=]()-> void
+                {
+                    std::cout << "clicked on button" << std::endl;
+                    tintIndex++;
+                }
+            ); 
 
             // let's try to make our little animation
 
@@ -132,7 +142,7 @@ namespace MyChallengeGame
         void Update(float delta) override
         {
             camera->Update(delta);
-
+            button->Update(camera, delta);
             
             if(Input::IsKeyJustDown(Key::Enter))
             {
@@ -210,8 +220,9 @@ namespace MyChallengeGame
                 spritebatch->End();
             }
 
-            spritebatch->Begin(shader, camera, glm::vec4(0, 1, 0, 1));
+            spritebatch->Begin(shader, camera, glm::vec4(1));
             spritebatch->Draw(spritesheet, 64, 64, {0, 0, 64, 64});
+            button->Draw(spritebatch, delta);
             spritebatch->End();
 
             spritebatch->Begin(shader, camera, glm::vec4(0, 1, 0, 1), 0, true);
