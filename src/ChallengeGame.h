@@ -8,6 +8,8 @@
 #include <Engine.h>
 #include "../external/tweeny-3.2.0.h"
 
+#include "Button.h"
+
 
 using namespace Engine;
 
@@ -25,9 +27,10 @@ namespace MyChallengeGame
         Spritebatch* spritebatch;
         Shader* shader;
         Texture2D* dude;
+        Texture2D* spritesheet;
         Camera2D* camera;
         BitmapFont* font;
-
+        Button* button;
 
         glm::vec2 dude_position = glm::vec2(0, 0);
 
@@ -51,7 +54,7 @@ namespace MyChallengeGame
         public:
         
         ChallengeGame(uint32_t screenWidth, uint32_t screenHeight, const char* windowTitle)
-        : Game(screenWidth, screenHeight, windowTitle), positions(MAX_INDEX)
+        : Game(screenWidth, screenHeight, windowTitle), positions(MAX_INDEX + 1)
         {
             
         }
@@ -62,6 +65,8 @@ namespace MyChallengeGame
             delete spritebatch;
             delete camera;
             delete font;
+            delete spritesheet;
+            delete button;
         }
 
         void Run() override
@@ -81,6 +86,8 @@ namespace MyChallengeGame
             shader = new Shader("Shaders/vertex.vert", "Shaders/fragment.frag");
             shader->use();
             dude = new Texture2D("Shaders/dude1.png", {});
+            //spritesheet = new Texture2D("assets/chips.png", {GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR, true});
+            spritesheet = new Texture2D("assets/chips.png", {});
 
             camera = new Camera2D(GetViewport());
             camera->Position.x = 0;
@@ -89,6 +96,13 @@ namespace MyChallengeGame
             camera->Zoom = 2.0f;
 
             spritebatch = new Spritebatch();
+            button = new Button(0, 0, spritesheet, {64, 0, 108, 48},
+                [=]()-> void
+                {
+                    std::cout << "clicked on button" << std::endl;
+                    tintIndex++;
+                }
+            ); 
 
             // let's try to make our little animation
 
@@ -128,7 +142,7 @@ namespace MyChallengeGame
         void Update(float delta) override
         {
             camera->Update(delta);
-
+            button->Update(camera, delta);
             
             if(Input::IsKeyJustDown(Key::Enter))
             {
@@ -206,8 +220,9 @@ namespace MyChallengeGame
                 spritebatch->End();
             }
 
-            spritebatch->Begin(shader, camera, glm::vec4(0, 1, 0, 1));
-            spritebatch->Draw(dude, moving_dude_x, -100);
+            spritebatch->Begin(shader, camera, glm::vec4(1));
+            spritebatch->Draw(spritesheet, 64, 64, {0, 0, 64, 64});
+            button->Draw(spritebatch, delta);
             spritebatch->End();
 
             spritebatch->Begin(shader, camera, glm::vec4(0, 1, 0, 1), 0, true);
