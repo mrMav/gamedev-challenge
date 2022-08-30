@@ -14,9 +14,9 @@
 /*
 
 TODO:
-     - make chips random
+done - make chips random
      - change text button from "play" to "start";
-     - add stats:
+done - add stats:
          - # of all credits inserted;
          - # of all credits removed;
          - # of current credits;
@@ -58,10 +58,12 @@ namespace MyChallengeGame
         const int MAX_INDEX = 80;
 
         /* Game state */
-        bool shouldPause = false;
+        bool shouldPause      = false;
         bool animationStarted = false;
-        int gameplayCounter = 0;
-        int creditsCounter = 0;
+        int gameplayCounter       = 0;
+        int allCreditsInCounter   = 0;
+        int allCreditsOutCounter  = 0;
+        int currentCreditsCounter = 0;
 
         std::vector<GamePiece> pieces;
 
@@ -103,7 +105,7 @@ namespace MyChallengeGame
             camera->Position.x = 0;
             camera->Position.y = 0;
             camera->Position.z = 1.0f;
-            camera->Zoom = 0.8f;
+            camera->Zoom = 1.0f;
 
             spritebatch = new Spritebatch();
 
@@ -117,12 +119,12 @@ namespace MyChallengeGame
                         shouldPause = !shouldPause;
                     } else
                     {
-                        if(creditsCounter > 0)
+                        if(currentCreditsCounter > 0)
                         {
                             ResetAnimation();
                             StartPiecesAnimation();
 
-                            creditsCounter--;
+                            currentCreditsCounter--;
 
                         } else
                         {
@@ -132,11 +134,12 @@ namespace MyChallengeGame
                 }
             );
 
-            creditsInButton = Button(GetViewport().HalfWidth() - 128 * 2 - 36, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64 + 128, 0, 128, 64},
+            creditsInButton = Button(GetViewport().HalfWidth() - 128 * 2 - 36 - 24, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64 + 128, 0, 128, 64},
                 [=]()-> void
                 {
                     std::cout << "clicked on credits in" << std::endl;
-                    creditsCounter++;
+                    allCreditsInCounter++;
+                    currentCreditsCounter++;
                 }
             );
 
@@ -144,7 +147,8 @@ namespace MyChallengeGame
                 [=]()-> void
                 {
                     std::cout << "clicked on credits out" << std::endl;
-                    creditsCounter = 0;
+                    allCreditsOutCounter += currentCreditsCounter;
+                    currentCreditsCounter = 0;
                 }
             );
 
@@ -244,9 +248,11 @@ namespace MyChallengeGame
             spritebatch->Begin(shader, camera, glm::vec4(1), 0, true);
             spritebatch->SetCustomView(glm::scale(glm::mat4(1), glm::vec3(scale)));            
             glm::vec2 pos1 = camera->WorldToScreen(playButton.position.x, playButton.position.y - 64);
-            glm::vec2 pos2 = camera->WorldToScreen(creditsInButton.position.x + 60, creditsInButton.position.y - 44);
+            glm::vec2 pos2 = camera->WorldToScreen(creditsInButton.position.x, creditsInButton.position.y - ((12 + 2) * 2 * 3));
             spritebatch->DrawString(font, pos1.x / scale, pos1.y / scale, (std::string("Number of\nplays: ") + std::to_string(gameplayCounter)).c_str());
-            spritebatch->DrawString(font, pos2.x / scale, pos2.y / scale, (std::string("Credits: ") + std::to_string(creditsCounter)).c_str());
+            spritebatch->DrawString(font, pos2.x / scale, pos2.y / scale, (std::string("Credits: ") + std::to_string(currentCreditsCounter)).c_str());
+            spritebatch->DrawString(font, pos2.x / scale, pos2.y / scale + 12, (std::string("Credits In: ") + std::to_string(allCreditsInCounter)).c_str());
+            spritebatch->DrawString(font, pos2.x / scale, pos2.y / scale + 24, (std::string("Credits Out: ") + std::to_string(allCreditsOutCounter)).c_str());
             spritebatch->End();
 
         }
