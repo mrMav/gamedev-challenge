@@ -6,15 +6,14 @@
 #include <math.h>
 
 #include <Engine.h>
-#include "../external/tweeny-3.2.0.h"
+#include "tweeny-3.2.0.h"
 
 #include "Button.h"
-
-
-using namespace Engine;
+#include "GamePiece.h"
 
 namespace MyChallengeGame
 {
+    using namespace Engine;
 
     enum Direction
     {
@@ -26,7 +25,6 @@ namespace MyChallengeGame
         private:
         Spritebatch* spritebatch;
         Shader* shader;
-        Texture2D* dude;
         Texture2D* spritesheet;
         Camera2D* camera;
         BitmapFont* font;
@@ -35,51 +33,29 @@ namespace MyChallengeGame
         Button creditsInButton;
         Button creditsOutButton;
 
-        glm::vec2 dude_position = glm::vec2(0, 0);
-
         glm::vec2 gameBoardCenter = glm::vec2(-32, -340+224);
         glm::vec2 gamePieceSize = glm::vec2(64, 64);
 
         const int MAX_INDEX = 48;
-        std::vector<glm::vec2> positions;
-
-        int tintIndex = 0;
-
-        int updateCurrentIndex = 0;
-        bool doUpdate = false;
-        int updateDirectionLoopCounter = 1;
-        int updateDirectionLoopIndex = 0;
-        int updateDirectionChanges = 0;
-
-        float moving_dude_x = -200.0f;
-        float moving_dude_y = -200.0f;
-        tweeny::tween<float, float> position_tween = tweeny::from(moving_dude_x, moving_dude_y).to(100.0f, 50.0f).during(50000).via(tweeny::easing::circularInOut);
-        bool updateTween = false;
 
         /* Game state */
-
+        bool shouldPause = false;
+        bool animationStarted = false;
         int gameplayCounter = 0;
         int creditsCounter = 0;
 
-        std::vector<glm::vec2> piecesPositions;
-        std::vector<tweeny::tween<float, float>> piecesPositionsTweens;
-        std::vector<bool> pieceUpdateStatus;
-
-        //GAME_PIECE_TWEEN_DURATION).via(TWEEN_PIECE_EASING);
-        const int GAME_PIECE_TWEEN_DURATION = 100000;
-        const tweeny::easing::cubicOutEasing TWEEN_PIECE_EASING = tweeny::easing::cubicOut;
+        std::vector<GamePiece> pieces;
 
         public:
         
         ChallengeGame(uint32_t screenWidth, uint32_t screenHeight, const char* windowTitle)
-        : Game(screenWidth, screenHeight, windowTitle), piecesPositions(MAX_INDEX + 1), piecesPositionsTweens(MAX_INDEX + 1), pieceUpdateStatus(MAX_INDEX + 1)
+        : Game(screenWidth, screenHeight, windowTitle), pieces(MAX_INDEX)
         {
             
         }
         ~ChallengeGame()
         {
             delete shader;
-            delete dude;
             delete spritebatch;
             delete camera;
             delete font;
@@ -102,7 +78,6 @@ namespace MyChallengeGame
 
             shader = new Shader("Shaders/vertex.vert", "Shaders/fragment.frag");
             shader->use();
-            dude = new Texture2D("Shaders/dude1.png", {});
             spritesheet = new Texture2D("assets/chips.png", {});
 
             camera = new Camera2D(GetViewport());
@@ -117,19 +92,24 @@ namespace MyChallengeGame
 
             playButton = Button(GetViewport().HalfWidth() * -1 + 36, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64, 0, 128, 64},
                 [=]()-> void
-                {
-                    std::cout << "clicked on button play" << std::endl;
-                    tintIndex++;
-    
-                    doUpdate = !doUpdate; // TODO: fix this
-
-                    if(creditsCounter > 0)
+                {   
+                    if(animationStarted)
                     {
-                        pieceUpdateStatus[0] = true;
-                        creditsCounter = std::max(0, creditsCounter - 1);
-                        gameplayCounter++;
-                    }
+                        shouldPause = !shouldPause; // TODO: fix this
+                    } else
+                    {
+                        if(creditsCounter > 0)
+                        {
+                            StartPiecesAnimation();
 
+                            creditsCounter--;
+                            gameplayCounter++;
+
+                        } else
+                        {
+                            std::cout << "No credits available!" << std::endl;
+                        }
+                    }
                 }
             );
 
@@ -165,9 +145,12 @@ namespace MyChallengeGame
 
                 for(int i = 0; i < directionLoopCounter; i++)
                 {
-                    //Move(indexNumber, currentDirection);
-                    CreatePiece(indexNumber, currentDirection);
-                    indexNumber++;
+                    if(indexNumber < MAX_INDEX)
+                    {
+                        CreatePiece(indexNumber, currentDirection);
+                        indexNumber++;
+                    }
+
                 }
 
                 directionChanges++;
@@ -187,99 +170,26 @@ namespace MyChallengeGame
         void Update(float delta) override
         {
             camera->Update(delta);
+
             playButton.Update(camera, delta);
             creditsInButton.Update(camera, delta);
             creditsOutButton.Update(camera, delta);
             
-            if(Input::IsKeyJustDown(Key::Enter))
+            if(!shouldPause)
             {
-                doUpdate = true;
-
-                // reset 
-                if(updateCurrentIndex >= MAX_INDEX)
-                {
-                    doUpdate = false;
-                    // no more animation
-                }
-
-            }
-
-            if(Input::IsKeyJustDown(Key::S))
-            {
-                doUpdate = true;
-
-            }
-
-            if(updateTween)
-            {
-                int dt = delta * 10000;
-                std::array<float, 2> r = position_tween.step(dt);
-                moving_dude_x = r[0];
-                moving_dude_y = r[1];
-
-            }
-
-            if(Input::IsKeyJustDown(Key::M))
-            {
-                moving_dude_x = -200.0f;
-                moving_dude_x = -200.0f;
-                position_tween = tweeny::from(moving_dude_x, moving_dude_y).to(100.0f, 50.0f).during(50000).via(tweeny::easing::circularInOut);
-                updateTween = true;
-                tintIndex++;
-            }
-
-            // if(doUpdate)
-            // {
-
-            //     Direction directions[] = {Direction::Left, Direction::Up, Direction::Right, Direction::Down};
-            //     Direction currentDirection = directions[0];
-
-            //     currentDirection = directions[(updateDirectionChanges % 4)]; // 4 possible directions
-
-            //     if(updateDirectionLoopIndex < updateDirectionLoopCounter)
-            //     {
-            //         MoveSquare(updateCurrentIndex, currentDirection);
-                    
-            //         updateCurrentIndex++;
-            //         updateDirectionLoopIndex++;
-
-            //     }
-                
-            //     if(updateDirectionLoopIndex >= updateDirectionLoopCounter)
-            //     {
-            //         updateDirectionChanges++;
-            //         updateDirectionLoopIndex = 0;
-
-            //         if(updateDirectionChanges % 2 == 0)
-            //             updateDirectionLoopCounter++;
-            //     }
-
-            //     doUpdate = false;
-            // }
-
-            if(doUpdate)
-            {
-
                 for(int i = 0; i < MAX_INDEX; i++)
                 {
-                    if(pieceUpdateStatus[i])
+                    pieces[i].Update(delta);
+
+                    if(pieces[i].TweenProgress() > GamePiece::ANIM_DELAY)
                     {
-                        std::array<float, 2> result = piecesPositionsTweens[i].step(delta);
-                        piecesPositions[i].x = result[0];
-                        piecesPositions[i].y = result[1];
-
-                        // if the current tween progress is above a certain percentage, trigger next one
-                        if(piecesPositionsTweens[i].progress() > 0.25f)
-                        {
-                            pieceUpdateStatus[i + 1] = true;
-                        }
-
+                        pieces[i + 1].StartAnimation();
                     }
 
                 }
-
-                //doUpdate = false;
             }
+
+            CheckAnimationOver();
 
         }
 
@@ -291,23 +201,11 @@ namespace MyChallengeGame
         {
             glClear(GL_COLOR_BUFFER_BIT);
             
-            // for(int i = 0; i < MAX_INDEX; i++)
-            // {
-            //     glm::vec4 tint = i == (tintIndex % MAX_INDEX) ? glm::vec4(1, 0, 0, 1) : glm::vec4(1);
-
-            //     spritebatch->Begin(shader, camera, tint);
-            //     spritebatch->Draw(spritesheet, positions[i].x, positions[i].y, {0, 0, 64, 64});
-            //     spritebatch->End();
-            // }
-
             spritebatch->Begin(shader, camera, glm::vec4(1));
 
-            spritebatch->Draw(spritesheet, moving_dude_x, moving_dude_y, {0, 64, 64, 64});
-
-
-            for(int i = 0; i < MAX_INDEX; i++)
+            for(auto p : pieces)
             {
-                spritebatch->Draw(spritesheet, piecesPositions[i].x, piecesPositions[i].y, {0, 0, 64, 64});
+                p.Draw(spritebatch, delta);
             }
 
             playButton.Draw(spritebatch, delta);
@@ -336,77 +234,55 @@ namespace MyChallengeGame
 
         void CreatePiece(int index, Direction direction)
         {
+
+            glm::vec2 position;
+            glm::vec2 destination;
+
             if(index > 0)
             {
-                piecesPositions[index] = piecesPositions[index -1];
+                position = pieces[index - 1].GetPosition();
             }
             else
             {
-                piecesPositions[index] = gameBoardCenter;
+                position = gameBoardCenter;
             }
+
+            destination = position;
 
             if(direction == Direction::Left)
             {
-                piecesPositions[index].x += gamePieceSize.x;
-
-                piecesPositionsTweens[index] =
-                    tweeny::from(piecesPositions[index].x, piecesPositions[index].y)
-                    .to(piecesPositions[index].x - gamePieceSize.x, piecesPositions[index].y)
-                    .during(GAME_PIECE_TWEEN_DURATION)
-                    .via(TWEEN_PIECE_EASING);
+                position.x += gamePieceSize.x;
             }
             if(direction == Direction::Right)
             {
-                piecesPositions[index].x -= gamePieceSize.x;
-
-                piecesPositionsTweens[index] =
-                    tweeny::from(piecesPositions[index].x, piecesPositions[index].y)
-                    .to(piecesPositions[index].x + gamePieceSize.x, piecesPositions[index].y)
-                    .during(GAME_PIECE_TWEEN_DURATION)
-                    .via(TWEEN_PIECE_EASING);
+                position.x -= gamePieceSize.x;
             }
             if(direction == Direction::Up)
             {
-                piecesPositions[index].y += gamePieceSize.y;
-
-                piecesPositionsTweens[index] =
-                    tweeny::from(piecesPositions[index].x, piecesPositions[index].y)
-                    .to(piecesPositions[index].x, piecesPositions[index].y - gamePieceSize.y)
-                    .during(GAME_PIECE_TWEEN_DURATION)
-                    .via(TWEEN_PIECE_EASING);
+                position.y += gamePieceSize.y;
             }
             if(direction == Direction::Down)
             {
-                piecesPositions[index].y -= gamePieceSize.y;
-
-                piecesPositionsTweens[index] =
-                    tweeny::from(piecesPositions[index].x, piecesPositions[index].y)
-                    .to(piecesPositions[index].x, piecesPositions[index].y + gamePieceSize.y)
-                    .during(GAME_PIECE_TWEEN_DURATION)
-                    .via(TWEEN_PIECE_EASING);
+                position.y -= gamePieceSize.y;
             }
+
+            pieces[index] = GamePiece(spritesheet, position, destination);
+            
         }
 
-        void MoveSquare(int index, Direction direction)
+        void StartPiecesAnimation()
         {
+            // we start the animation on the first piece, then they will chain start
+            pieces[0].StartAnimation();
+            animationStarted = true;
+        }
 
-            //printf("Moving index %d in direction %d\n", index, direction);
-
-            if(direction == Direction::Left)
+        void CheckAnimationOver()
+        {
+            if(pieces[MAX_INDEX - 1].TweenProgress() >= 0.999998f)
             {
-                positions[index].x -= gamePieceSize.x;
-            }
-            if(direction == Direction::Right)
-            {
-                positions[index].x += gamePieceSize.x;  
-            }
-            if(direction == Direction::Up)
-            {
-                positions[index].y -= gamePieceSize.y;
-            }
-            if(direction == Direction::Down)
-            {
-                positions[index].y += gamePieceSize.y;
+                animationStarted = false;
+                // must reset now
             }
         }
 
