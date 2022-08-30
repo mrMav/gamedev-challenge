@@ -2,8 +2,13 @@
 
 namespace MyChallengeGame
 {
+        int RandInt(int min, int max)
+        {
+            // not the ideal random number generator, but it will work in our simple example
+            return (rand() % max) + min; 
+        }
 
-        const float GamePiece::ANIM_DELAY = 0.8f;
+        const float GamePiece::ANIM_DELAY = 0.005f;
 
         GamePiece::GamePiece()
         {
@@ -13,7 +18,9 @@ namespace MyChallengeGame
         GamePiece::GamePiece(Texture2D* texture, glm::vec2 position, glm::vec2 destination)
             : m_Texture(texture), m_InitialPosition(position), m_Position(position), m_Destination(destination)
         {
-            // TODO: init clip rect y position to be random
+            // TODO: init clip rect y position to be random            
+
+            m_ClipRect.Y = RandInt(0, 7) * 64;
 
             m_Tween = tweeny::from(position.x, position.y)
                 .to(destination.x, destination.y)
@@ -69,9 +76,8 @@ namespace MyChallengeGame
 
         void GamePiece::Reset()
         {
-            //m_Tween.jump(0);
-            m_AnimationStarted = false;
-            SetTween();
+            m_Tween.seek(0); // resets the tween back
+            m_AnimationStarted = false;            
             SetPosition(m_InitialPosition);
             deltaAcumulation = 0;
         }

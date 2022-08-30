@@ -11,8 +11,7 @@ namespace MyChallengeGame
 
         public:
 
-        static const int DURATION  = 500;
-        static const int STEP_MULT = 10;
+        static const int DURATION = 1000;
         static const float ANIM_DELAY;
         
         GamePiece();

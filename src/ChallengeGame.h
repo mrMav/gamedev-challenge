@@ -11,6 +11,25 @@
 #include "Button.h"
 #include "GamePiece.h"
 
+/*
+
+TODO:
+     - make chips random
+     - change text button from "play" to "start";
+     - add stats:
+         - # of all credits inserted;
+         - # of all credits removed;
+         - # of current credits;
+         - # of plays
+     - make play counter only add up at the end of the play
+     - make it so only when button start is pressed again, the board resets
+     - rearrange visuals
+     - test, test, test (linux and windows)
+     - make cmake installs
+
+*/
+
+
 namespace MyChallengeGame
 {
     using namespace Engine;
@@ -36,7 +55,7 @@ namespace MyChallengeGame
         glm::vec2 gameBoardCenter = glm::vec2(-32, -340+224);
         glm::vec2 gamePieceSize = glm::vec2(64, 64);
 
-        const int MAX_INDEX = 48;
+        const int MAX_INDEX = 80;
 
         /* Game state */
         bool shouldPause = false;
@@ -51,7 +70,7 @@ namespace MyChallengeGame
         ChallengeGame(uint32_t screenWidth, uint32_t screenHeight, const char* windowTitle)
         : Game(screenWidth, screenHeight, windowTitle), pieces(MAX_INDEX)
         {
-            
+            srand((unsigned)time(NULL));
         }
         ~ChallengeGame()
         {
@@ -84,7 +103,7 @@ namespace MyChallengeGame
             camera->Position.x = 0;
             camera->Position.y = 0;
             camera->Position.z = 1.0f;
-            camera->Zoom = 1.0f;
+            camera->Zoom = 0.8f;
 
             spritebatch = new Spritebatch();
 
@@ -95,15 +114,15 @@ namespace MyChallengeGame
                 {   
                     if(animationStarted)
                     {
-                        shouldPause = !shouldPause; // TODO: fix this
+                        shouldPause = !shouldPause;
                     } else
                     {
                         if(creditsCounter > 0)
                         {
+                            ResetAnimation();
                             StartPiecesAnimation();
 
                             creditsCounter--;
-                            gameplayCounter++;
 
                         } else
                         {
@@ -187,11 +206,10 @@ namespace MyChallengeGame
                     }
 
                 }
+
+                CheckAnimationOver();
             }
 
-            CheckAnimationOver();
-
-            std::cout << glm::to_string(pieces[0].GetPosition()) << std::endl;
 
         }
 
@@ -224,8 +242,7 @@ namespace MyChallengeGame
             // game state render
             float scale = 2.0f;
             spritebatch->Begin(shader, camera, glm::vec4(1), 0, true);
-            spritebatch->SetCustomView(glm::scale(glm::mat4(1), glm::vec3(scale)));
-            //spritebatch->DrawString(font, playButton.position.x, playButton.position.y - 16, (std::string("Number of plays: ") + std::to_string(gameplayCounter)).c_str());
+            spritebatch->SetCustomView(glm::scale(glm::mat4(1), glm::vec3(scale)));            
             glm::vec2 pos1 = camera->WorldToScreen(playButton.position.x, playButton.position.y - 64);
             glm::vec2 pos2 = camera->WorldToScreen(creditsInButton.position.x + 60, creditsInButton.position.y - 44);
             spritebatch->DrawString(font, pos1.x / scale, pos1.y / scale, (std::string("Number of\nplays: ") + std::to_string(gameplayCounter)).c_str());
@@ -284,18 +301,15 @@ namespace MyChallengeGame
             if(pieces[MAX_INDEX - 1].TweenProgress() >= 0.999998f)
             {
                 animationStarted = false;
-                
-                // must reset now
-                // for(auto p : pieces)
-                // {
-                //     p.Reset();
-                // }
+                gameplayCounter++;
+            }
+        }
 
-                for(int i = MAX_INDEX - 1; i >= 0; i--)
-                {
-                    pieces[i].Reset();
-                }
-
+        void ResetAnimation()
+        {
+            for(int i = MAX_INDEX - 1; i >= 0; i--)
+            {
+                pieces[i].Reset();
             }
         }
 
