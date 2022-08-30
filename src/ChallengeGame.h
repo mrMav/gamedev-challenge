@@ -175,7 +175,7 @@ namespace MyChallengeGame
             creditsInButton.Update(camera, delta);
             creditsOutButton.Update(camera, delta);
             
-            if(!shouldPause)
+            if(!shouldPause && animationStarted)
             {
                 for(int i = 0; i < MAX_INDEX; i++)
                 {
@@ -190,6 +190,8 @@ namespace MyChallengeGame
             }
 
             CheckAnimationOver();
+
+            std::cout << glm::to_string(pieces[0].GetPosition()) << std::endl;
 
         }
 
@@ -282,7 +284,18 @@ namespace MyChallengeGame
             if(pieces[MAX_INDEX - 1].TweenProgress() >= 0.999998f)
             {
                 animationStarted = false;
+                
                 // must reset now
+                // for(auto p : pieces)
+                // {
+                //     p.Reset();
+                // }
+
+                for(int i = MAX_INDEX - 1; i >= 0; i--)
+                {
+                    pieces[i].Reset();
+                }
+
             }
         }
 

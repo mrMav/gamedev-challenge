@@ -11,8 +11,8 @@ namespace MyChallengeGame
 
         public:
 
-        static const int DURATION  = 100000;
-        static const int STEP_MULT = 1;
+        static const int DURATION  = 500;
+        static const int STEP_MULT = 10;
         static const float ANIM_DELAY;
         
         GamePiece();
@@ -35,14 +35,20 @@ namespace MyChallengeGame
 
         float TweenProgress() const { return m_Tween.progress(); };
 
+        void Reset();
+
         private:
         
+        glm::vec2 m_InitialPosition;
         glm::vec2 m_Position;
         glm::vec2 m_Destination;
         tweeny::tween<float, float> m_Tween;
         Rectangle<int> m_ClipRect = {0, 0, 64, 64};
         Texture2D* m_Texture;
         float m_AnimationStarted = false;
+
+        // timing
+        float deltaAcumulation = 0;
 
     };
 
