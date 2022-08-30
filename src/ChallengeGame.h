@@ -16,19 +16,19 @@
 TODO:
 done - make chips random
      - change text button from "play" to "start";
+     - change text color to white and tint lettering
 done - add stats:
          - # of all credits inserted;
          - # of all credits removed;
          - # of current credits;
          - # of plays
-     - make play counter only add up at the end of the play
-     - make it so only when button start is pressed again, the board resets
-     - rearrange visuals
+done - make play counter only add up at the end of the play
+done - make it so only when button start is pressed again, the board resets
+done - rearrange visuals
      - test, test, test (linux and windows)
      - make cmake installs
 
 */
-
 
 namespace MyChallengeGame
 {
@@ -58,6 +58,7 @@ namespace MyChallengeGame
         const int MAX_INDEX = 80;
 
         /* Game state */
+        bool showFrameRate    = false;
         bool shouldPause      = false;
         bool animationStarted = false;
         int gameplayCounter       = 0;
@@ -134,7 +135,7 @@ namespace MyChallengeGame
                 }
             );
 
-            creditsInButton = Button(GetViewport().HalfWidth() - 128 * 2 - 36 - 24, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64 + 128, 0, 128, 64},
+            creditsInButton = Button(GetViewport().HalfWidth() - 128 * 2 - 36 - 36, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64 + 128, 0, 128, 64},
                 [=]()-> void
                 {
                     std::cout << "clicked on credits in" << std::endl;
@@ -214,6 +215,11 @@ namespace MyChallengeGame
                 CheckAnimationOver();
             }
 
+            if(Input::IsKeyJustDown(Key::F))
+            {
+                showFrameRate = !showFrameRate;
+            }
+
 
         }
 
@@ -238,10 +244,13 @@ namespace MyChallengeGame
             spritebatch->End();
 
             // framerate counter
-            spritebatch->Begin(shader, camera, glm::vec4(0, 1, 0, 1), 0, true);
-            spritebatch->SetCustomView(glm::scale(glm::mat4(1), glm::vec3(4)));
-            spritebatch->DrawString(font, 1, 1, std::to_string(60.0f / (delta*1000.0f)).c_str());
-            spritebatch->End();
+            if(showFrameRate)
+            {
+                spritebatch->Begin(shader, camera, glm::vec4(1, 0, 0, 1), 0, true);
+                spritebatch->SetCustomView(glm::scale(glm::mat4(1), glm::vec3(4)));
+                spritebatch->DrawString(font, 1, 1, std::to_string(60.0f / (delta*1000.0f)).c_str());
+                spritebatch->End();
+            }
 
             // game state render
             float scale = 2.0f;
@@ -253,6 +262,12 @@ namespace MyChallengeGame
             spritebatch->DrawString(font, pos2.x / scale, pos2.y / scale, (std::string("Credits: ") + std::to_string(currentCreditsCounter)).c_str());
             spritebatch->DrawString(font, pos2.x / scale, pos2.y / scale + 12, (std::string("Credits In: ") + std::to_string(allCreditsInCounter)).c_str());
             spritebatch->DrawString(font, pos2.x / scale, pos2.y / scale + 24, (std::string("Credits Out: ") + std::to_string(allCreditsOutCounter)).c_str());
+            
+            
+
+            if(shouldPause)
+                spritebatch->DrawString(font, 64, GetViewport().HalfHeight() - 14, (std::string("(Simulation paused)")).c_str());
+
             spritebatch->End();
 
         }
