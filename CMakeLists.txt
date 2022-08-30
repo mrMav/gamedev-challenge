@@ -16,6 +16,7 @@ add_subdirectory(external)
 add_subdirectory(external/simple-cpp-engine)
 
 target_include_directories(${PROJECT_NAME}
+    PUBLIC external/
     PUBLIC external/simple-cpp-engine/src
     PUBLIC external/simple-cpp-engine/glm
     PUBLIC src

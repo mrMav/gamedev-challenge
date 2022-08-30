@@ -6,15 +6,33 @@
 #include <math.h>
 
 #include <Engine.h>
-#include "../external/tweeny-3.2.0.h"
+#include "tweeny-3.2.0.h"
 
 #include "Button.h"
+#include "GamePiece.h"
 
+/*
 
-using namespace Engine;
+TODO:
+done - make chips random
+     - change text button from "play" to "start";
+     - change text color to white and tint lettering
+done - add stats:
+         - # of all credits inserted;
+         - # of all credits removed;
+         - # of current credits;
+         - # of plays
+done - make play counter only add up at the end of the play
+done - make it so only when button start is pressed again, the board resets
+done - rearrange visuals
+     - test, test, test (linux and windows)
+     - make cmake installs
+
+*/
 
 namespace MyChallengeGame
 {
+    using namespace Engine;
 
     enum Direction
     {
@@ -26,47 +44,44 @@ namespace MyChallengeGame
         private:
         Spritebatch* spritebatch;
         Shader* shader;
-        Texture2D* dude;
         Texture2D* spritesheet;
         Camera2D* camera;
         BitmapFont* font;
-        Button* button;
 
-        glm::vec2 dude_position = glm::vec2(0, 0);
+        Button playButton;
+        Button creditsInButton;
+        Button creditsOutButton;
 
-        glm::vec2 centerCoord = glm::vec2(0, 0);
+        glm::vec2 gameBoardCenter = glm::vec2(-32, -340+224);
+        glm::vec2 gamePieceSize = glm::vec2(64, 64);
 
-        const int MAX_INDEX = 48;
-        std::vector<glm::vec2> positions;
+        const int MAX_INDEX = 80;
 
-        int tintIndex = 0;
+        /* Game state */
+        bool showFrameRate    = false;
+        bool shouldPause      = false;
+        bool animationStarted = false;
+        int gameplayCounter       = 0;
+        int allCreditsInCounter   = 0;
+        int allCreditsOutCounter  = 0;
+        int currentCreditsCounter = 0;
 
-        int updateCurrentIndex = 0;
-        bool doUpdate = false;
-        int updateDirectionLoopCounter = 1;
-        int updateDirectionLoopIndex = 0;
-        int updateDirectionChanges = 0;
-
-        float moving_dude_x = -200.0f;
-        tweeny::tween<float> position_tween = tweeny::from(moving_dude_x).to(100.0f).during(50000).via(tweeny::easing::circularInOut);
-        bool updateTween = false;
+        std::vector<GamePiece> pieces;
 
         public:
         
         ChallengeGame(uint32_t screenWidth, uint32_t screenHeight, const char* windowTitle)
-        : Game(screenWidth, screenHeight, windowTitle), positions(MAX_INDEX + 1)
+        : Game(screenWidth, screenHeight, windowTitle), pieces(MAX_INDEX)
         {
-            
+            srand((unsigned)time(NULL));
         }
         ~ChallengeGame()
         {
             delete shader;
-            delete dude;
             delete spritebatch;
             delete camera;
             delete font;
             delete spritesheet;
-            delete button;
         }
 
         void Run() override
@@ -85,24 +100,58 @@ namespace MyChallengeGame
 
             shader = new Shader("Shaders/vertex.vert", "Shaders/fragment.frag");
             shader->use();
-            dude = new Texture2D("Shaders/dude1.png", {});
-            //spritesheet = new Texture2D("assets/chips.png", {GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR, true});
             spritesheet = new Texture2D("assets/chips.png", {});
 
             camera = new Camera2D(GetViewport());
             camera->Position.x = 0;
             camera->Position.y = 0;
             camera->Position.z = 1.0f;
-            camera->Zoom = 2.0f;
+            camera->Zoom = 1.0f;
 
             spritebatch = new Spritebatch();
-            button = new Button(0, 0, spritesheet, {64, 0, 108, 48},
+
+            /* create some buttons */
+
+            playButton = Button(GetViewport().HalfWidth() * -1 + 36, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64, 0, 128, 64},
+                [=]()-> void
+                {   
+                    if(animationStarted)
+                    {
+                        shouldPause = !shouldPause;
+                    } else
+                    {
+                        if(currentCreditsCounter > 0)
+                        {
+                            ResetAnimation();
+                            StartPiecesAnimation();
+
+                            currentCreditsCounter--;
+
+                        } else
+                        {
+                            std::cout << "No credits available!" << std::endl;
+                        }
+                    }
+                }
+            );
+
+            creditsInButton = Button(GetViewport().HalfWidth() - 128 * 2 - 36 - 36, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64 + 128, 0, 128, 64},
                 [=]()-> void
                 {
-                    std::cout << "clicked on button" << std::endl;
-                    tintIndex++;
+                    std::cout << "clicked on credits in" << std::endl;
+                    allCreditsInCounter++;
+                    currentCreditsCounter++;
                 }
-            ); 
+            );
+
+            creditsOutButton = Button(GetViewport().HalfWidth() - 128 - 36, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64 + 128, 64, 128, 64},
+                [=]()-> void
+                {
+                    std::cout << "clicked on credits out" << std::endl;
+                    allCreditsOutCounter += currentCreditsCounter;
+                    currentCreditsCounter = 0;
+                }
+            );
 
             // let's try to make our little animation
 
@@ -120,9 +169,12 @@ namespace MyChallengeGame
 
                 for(int i = 0; i < directionLoopCounter; i++)
                 {
-                    //Move(indexNumber, currentDirection);
-                    PlaceSquare(indexNumber,currentDirection);
-                    indexNumber++;
+                    if(indexNumber < MAX_INDEX)
+                    {
+                        CreatePiece(indexNumber, currentDirection);
+                        indexNumber++;
+                    }
+
                 }
 
                 directionChanges++;
@@ -142,64 +194,32 @@ namespace MyChallengeGame
         void Update(float delta) override
         {
             camera->Update(delta);
-            button->Update(camera, delta);
+
+            playButton.Update(camera, delta);
+            creditsInButton.Update(camera, delta);
+            creditsOutButton.Update(camera, delta);
             
-            if(Input::IsKeyJustDown(Key::Enter))
+            if(!shouldPause && animationStarted)
             {
-                doUpdate = true;
-
-                // reset 
-                if(updateCurrentIndex >= MAX_INDEX)
+                for(int i = 0; i < MAX_INDEX; i++)
                 {
-                    doUpdate = false;
-                    // no more animation
+                    pieces[i].Update(delta);
+
+                    if(pieces[i].TweenProgress() > GamePiece::ANIM_DELAY)
+                    {
+                        pieces[i + 1].StartAnimation();
+                    }
+
                 }
 
+                CheckAnimationOver();
             }
 
-            if(updateTween)
+            if(Input::IsKeyJustDown(Key::F))
             {
-                int dt = delta * 10000;
-                moving_dude_x = position_tween.step(dt);
-
+                showFrameRate = !showFrameRate;
             }
 
-            if(Input::IsKeyJustDown(Key::M))
-            {
-                moving_dude_x = -200.0f;
-                position_tween = tweeny::from(moving_dude_x).to(200.0f - 24.0f).during(50000).via(tweeny::easing::backOut);
-                updateTween = true;
-                tintIndex++;
-            }
-
-            if(doUpdate)
-            {
-
-                Direction directions[] = {Direction::Left, Direction::Up, Direction::Right, Direction::Down};
-                Direction currentDirection = directions[0];
-
-                currentDirection = directions[(updateDirectionChanges % 4)]; // 4 possible directions
-
-                if(updateDirectionLoopIndex < updateDirectionLoopCounter)
-                {
-                    MoveSquare(updateCurrentIndex, currentDirection);
-                    
-                    updateCurrentIndex++;
-                    updateDirectionLoopIndex++;
-
-                }
-                
-                if(updateDirectionLoopIndex >= updateDirectionLoopCounter)
-                {
-                    updateDirectionChanges++;
-                    updateDirectionLoopIndex = 0;
-
-                    if(updateDirectionChanges % 2 == 0)
-                        updateDirectionLoopCounter++;
-                }
-
-                doUpdate = false;
-            }
 
         }
 
@@ -211,75 +231,106 @@ namespace MyChallengeGame
         {
             glClear(GL_COLOR_BUFFER_BIT);
             
-            for(int i = 0; i < MAX_INDEX; i++)
-            {
-                glm::vec4 tint = i == (tintIndex % MAX_INDEX) ? glm::vec4(1, 0, 0, 1) : glm::vec4(1);
+            spritebatch->Begin(shader, camera, glm::vec4(1));
 
-                spritebatch->Begin(shader, camera, tint);
-                spritebatch->Draw(dude, positions[i].x, positions[i].y);
+            for(auto p : pieces)
+            {
+                p.Draw(spritebatch, delta);
+            }
+
+            playButton.Draw(spritebatch, delta);
+            creditsInButton.Draw(spritebatch, delta);
+            creditsOutButton.Draw(spritebatch, delta);
+            spritebatch->End();
+
+            // framerate counter
+            if(showFrameRate)
+            {
+                spritebatch->Begin(shader, camera, glm::vec4(1, 0, 0, 1), 0, true);
+                spritebatch->SetCustomView(glm::scale(glm::mat4(1), glm::vec3(4)));
+                spritebatch->DrawString(font, 1, 1, std::to_string(60.0f / (delta*1000.0f)).c_str());
                 spritebatch->End();
             }
 
-            spritebatch->Begin(shader, camera, glm::vec4(1));
-            spritebatch->Draw(spritesheet, 64, 64, {0, 0, 64, 64});
-            button->Draw(spritebatch, delta);
-            spritebatch->End();
+            // game state render
+            float scale = 2.0f;
+            spritebatch->Begin(shader, camera, glm::vec4(1), 0, true);
+            spritebatch->SetCustomView(glm::scale(glm::mat4(1), glm::vec3(scale)));            
+            glm::vec2 pos1 = camera->WorldToScreen(playButton.position.x, playButton.position.y - 64);
+            glm::vec2 pos2 = camera->WorldToScreen(creditsInButton.position.x, creditsInButton.position.y - ((12 + 2) * 2 * 3));
+            spritebatch->DrawString(font, pos1.x / scale, pos1.y / scale, (std::string("Number of\nplays: ") + std::to_string(gameplayCounter)).c_str());
+            spritebatch->DrawString(font, pos2.x / scale, pos2.y / scale, (std::string("Credits: ") + std::to_string(currentCreditsCounter)).c_str());
+            spritebatch->DrawString(font, pos2.x / scale, pos2.y / scale + 12, (std::string("Credits In: ") + std::to_string(allCreditsInCounter)).c_str());
+            spritebatch->DrawString(font, pos2.x / scale, pos2.y / scale + 24, (std::string("Credits Out: ") + std::to_string(allCreditsOutCounter)).c_str());
+            
+            
 
-            spritebatch->Begin(shader, camera, glm::vec4(0, 1, 0, 1), 0, true);
-            spritebatch->SetCustomView(glm::scale(glm::mat4(1), glm::vec3(4)));
-            spritebatch->DrawString(font, 12, 12, std::to_string(60.0f / (delta*1000.0f)).c_str());
+            if(shouldPause)
+                spritebatch->DrawString(font, 64, GetViewport().HalfHeight() - 14, (std::string("(Simulation paused)")).c_str());
+
             spritebatch->End();
 
         }
 
-        void Move(int index, int direction)
+        void CreatePiece(int index, Direction direction)
         {
-            printf("Index: %d moves in direction %d\n", index, direction);
-        }
 
-        void PlaceSquare(int index, Direction direction)
-        {
+            glm::vec2 position;
+            glm::vec2 destination;
+
             if(index > 0)
-                positions[index] = positions[index - 1];
+            {
+                position = pieces[index - 1].GetPosition();
+            }
+            else
+            {
+                position = gameBoardCenter;
+            }
+
+            destination = position;
 
             if(direction == Direction::Left)
             {
-                positions[index].x -= dude->GetWidth();     
+                position.x += gamePieceSize.x;
             }
             if(direction == Direction::Right)
             {
-                positions[index].x += dude->GetWidth();     
+                position.x -= gamePieceSize.x;
             }
             if(direction == Direction::Up)
             {
-                positions[index].y -= dude->GetHeight();     
+                position.y += gamePieceSize.y;
             }
             if(direction == Direction::Down)
             {
-                positions[index].y += dude->GetHeight();     
+                position.y -= gamePieceSize.y;
+            }
+
+            pieces[index] = GamePiece(spritesheet, position, destination);
+            
+        }
+
+        void StartPiecesAnimation()
+        {
+            // we start the animation on the first piece, then they will chain start
+            pieces[0].StartAnimation();
+            animationStarted = true;
+        }
+
+        void CheckAnimationOver()
+        {
+            if(pieces[MAX_INDEX - 1].TweenProgress() >= 0.999998f)
+            {
+                animationStarted = false;
+                gameplayCounter++;
             }
         }
 
-        void MoveSquare(int index, Direction direction)
+        void ResetAnimation()
         {
-
-            //printf("Moving index %d in direction %d\n", index, direction);
-
-            if(direction == Direction::Left)
+            for(int i = MAX_INDEX - 1; i >= 0; i--)
             {
-                positions[index].x -= dude->GetWidth();     
-            }
-            if(direction == Direction::Right)
-            {
-                positions[index].x += dude->GetWidth();     
-            }
-            if(direction == Direction::Up)
-            {
-                positions[index].y -= dude->GetHeight();     
-            }
-            if(direction == Direction::Down)
-            {
-                positions[index].y += dude->GetHeight();     
+                pieces[i].Reset();
             }
         }
 
