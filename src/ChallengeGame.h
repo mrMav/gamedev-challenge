@@ -112,7 +112,9 @@ namespace MyChallengeGame
 
             /* create some buttons */
 
-            playButton = Button(GetViewport().HalfWidth() * -1 + 36, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64, 0, 128, 64},
+            playButton = Button(GetViewport().HalfWidth() * -1 + 36, GetViewport().HalfHeight() - 36 - 64, spritesheet,
+                { 64, 0, 128, 64 },
+                { 64 + 128, 0, 128, 64 },
                 [=]()-> void
                 {   
                     if(animationStarted)
@@ -135,7 +137,9 @@ namespace MyChallengeGame
                 }
             );
 
-            creditsInButton = Button(GetViewport().HalfWidth() - 128 * 2 - 36 - 36, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64 + 128, 0, 128, 64},
+            creditsInButton = Button(GetViewport().HalfWidth() - 128 * 2 - 36 - 36, GetViewport().HalfHeight() - 36 - 64, spritesheet,
+                { 64, 64, 128, 64 },
+                { 64 + 128, 64, 128, 64},
                 [=]()-> void
                 {
                     std::cout << "clicked on credits in" << std::endl;
@@ -144,7 +148,9 @@ namespace MyChallengeGame
                 }
             );
 
-            creditsOutButton = Button(GetViewport().HalfWidth() - 128 - 36, GetViewport().HalfHeight() - 36 - 64, spritesheet, {64 + 128, 64, 128, 64},
+            creditsOutButton = Button(GetViewport().HalfWidth() - 128 - 36, GetViewport().HalfHeight() - 36 - 64, spritesheet,
+                { 64, 128, 128, 64 },
+                { 64 + 128, 128, 128, 64 },
                 [=]()-> void
                 {
                     std::cout << "clicked on credits out" << std::endl;
