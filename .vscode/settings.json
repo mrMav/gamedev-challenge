@@ -1,5 +1,8 @@
 {
     "cmake.configureArgs": [
+        "-DGAME_COPY_ASSETS=ON",
+        "-DGAME_INSTALL=ON",
+        
         // simple-cpp-engine
         "-DBUILD_TESTS=OFF",
         "-DCOPY_SHADERS=ON",
