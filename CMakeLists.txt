@@ -36,21 +36,21 @@ set(ASSET_LIST
     ${CMAKE_CURRENT_LIST_DIR}/assets/vertex.vert
 )
 
-if(COPY_ASSETS)
+if(GAME_COPY_ASSETS)
 
     #copy the shader source to the target folder    
 
     set(ASSETS_DIR ${CMAKE_BINARY_DIR}/assets)
 
-    add_custom_target(COPY_ASSETS_
+    add_custom_target(GAME_COPY_ASSETS_TARGET
         COMMAND ${CMAKE_COMMAND} -E make_directory ${ASSETS_DIR}            
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ASSET_LIST} ${ASSETS_DIR}
         COMMENT "Copying asset files to build..."
     )
 
-    add_dependencies(gamedev-challenge COPY_ASSETS_)
+    add_dependencies(gamedev-challenge GAME_COPY_ASSETS_TARGET)
 
-endif(COPY_ASSETS)
+endif(GAME_COPY_ASSETS)
 
 if(GAME_INSTALL)
 

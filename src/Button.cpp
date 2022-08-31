@@ -10,8 +10,8 @@ namespace MyChallengeGame
         
     }
 
-    Button::Button(int32_t x, int32_t y, Texture2D* texture, Rectangle<int> clipRect, std::function<void()> callback)
-        : m_Texture(texture), m_clipRect(clipRect)
+    Button::Button(int32_t x, int32_t y, Texture2D* texture, Rectangle<int> clipRect, Rectangle<int> clipRectHover, std::function<void()> callback)
+        : m_Texture(texture), m_clipRect(clipRect), m_clipRectHover(clipRectHover)
     {
         position.x = x;
         position.y = y;
@@ -39,7 +39,8 @@ namespace MyChallengeGame
            mouse.y > position.y &&
            mouse.y < position.y + m_ButtonHeight)
         {
-            //std::cout << "Button hover!" << std::endl;
+            
+            m_Hover = true;
 
             if(Input::IsMouseButtonJustDown(Mouse::MouseButtonLeft))
             {
@@ -47,11 +48,17 @@ namespace MyChallengeGame
             }
 
         }
+        else
+        {
+            m_Hover = false;
+        }
     }
 
     void Button::Draw(Spritebatch* spritebatch, float delta)
     {
-        spritebatch->Draw(m_Texture, position.x, position.y, m_clipRect);
-
+        if(!m_Hover)
+            spritebatch->Draw(m_Texture, position.x, position.y, m_clipRect);
+        else
+            spritebatch->Draw(m_Texture, position.x, position.y, m_clipRectHover);
     }
 }
