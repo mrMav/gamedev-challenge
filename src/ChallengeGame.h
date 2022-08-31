@@ -11,25 +11,6 @@
 #include "Button.h"
 #include "GamePiece.h"
 
-/*
-
-TODO:
-done - make chips random
-     - change text button from "play" to "start";
-     - change text color to white and tint lettering
-done - add stats:
-         - # of all credits inserted;
-         - # of all credits removed;
-         - # of current credits;
-         - # of plays
-done - make play counter only add up at the end of the play
-done - make it so only when button start is pressed again, the board resets
-done - rearrange visuals
-     - test, test, test (linux and windows)
-     - make cmake installs
-
-*/
-
 namespace MyChallengeGame
 {
     using namespace Engine;
@@ -69,22 +50,47 @@ namespace MyChallengeGame
         * delta is the amount of time since the last frame
         */
         void Render(float delta) override;
-
+        
+        /*
+        * Will setup piece at current index based on the direction
+        * it should animate
+        */
         void CreatePiece(int index, Direction direction);
 
+        /*
+        * Init animation state
+        */
         void StartPiecesAnimation();
 
+        /*
+        * checks if the animation should be over
+        */
         void CheckAnimationOver();
 
+        /*
+        * Resets the animations to the inital state
+        */
         void ResetAnimation();
 
         private:
         
+        // a handy spritebatcher to draw all our elements
+        // on the screen. call Begin() before Draw() and End() after
         Spritebatch* m_Spritebatch;
+        
+        // the shader to be used by our batcher        
         Shader*      m_Shader;
+
+        // the texture that contains all the game graphics
         Texture2D*   m_Spritesheet;
+
+        // the camera that contains the game transform (coord system)
         Camera2D*    m_Camera;
+
+        // a bitmap font to render basic monospaced text
         BitmapFont*  m_Font;
+
+        // UI button elements:
 
         Button m_PlayButton;
         Button m_CreditsInButton;
@@ -111,6 +117,7 @@ namespace MyChallengeGame
         int m_AllCreditsOutCounter  = 0;
         int m_CurrentCreditsCounter = 0;
 
+        // container for all the game pieces
         std::vector<GamePiece> m_Pieces;
 
     };

@@ -13,6 +13,7 @@ namespace MyChallengeGame
 
         static const int DURATION = 1000;
         static const float ANIM_DELAY;
+        static const float ANIM_OVER_THRESHOLD;
         
         GamePiece();
         GamePiece(Texture2D* texture, glm::vec2 position, glm::vec2 destination);

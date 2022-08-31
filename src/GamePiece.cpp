@@ -9,6 +9,7 @@ namespace MyChallengeGame
         }
 
         const float GamePiece::ANIM_DELAY = 0.005f;
+        const float GamePiece::ANIM_OVER_THRESHOLD = 0.999998f;
 
         GamePiece::GamePiece()
         {

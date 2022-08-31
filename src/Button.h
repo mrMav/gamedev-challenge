@@ -12,7 +12,7 @@ namespace MyChallengeGame
     {
         public:
 
-        glm::vec2 position;
+        glm::vec2 Position;
 
         Button();
         Button(int32_t x, int32_t y, Texture2D* texture, Rectangle<int> clipRect, Rectangle<int> clipRectHover, std::function<void()> callback = nullptr);
