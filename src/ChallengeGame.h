@@ -253,7 +253,7 @@ namespace MyChallengeGame
             // framerate counter
             if(showFrameRate)
             {
-                spritebatch->Begin(shader, camera, glm::vec4(1, 0, 0, 1), 0, true);
+                spritebatch->Begin(shader, camera, glm::vec4(0.1, 1, 0.1, 1), 0, true);
                 spritebatch->SetCustomView(glm::scale(glm::mat4(1), glm::vec3(4)));
                 spritebatch->DrawString(font, 1, 1, std::to_string(60.0f / (delta*1000.0f)).c_str());
                 spritebatch->End();
