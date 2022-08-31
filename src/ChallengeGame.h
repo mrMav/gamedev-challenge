@@ -96,9 +96,9 @@ namespace MyChallengeGame
         {
             glClearColor(0.392, 0.584, 0.929, 1);  // good ol' cornflower blue
 
-            font = new BitmapFont("Shaders/mbf_big_00.png", 10, 12);
+            font = new BitmapFont("assets/mbf_big_00.png", 10, 12);
 
-            shader = new Shader("Shaders/vertex.vert", "Shaders/fragment.frag");
+            shader = new Shader("assets/vertex.vert", "assets/fragment.frag");
             shader->use();
             spritesheet = new Texture2D("assets/chips.png", {});
 
