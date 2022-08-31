@@ -9,18 +9,17 @@ namespace MyChallengeGame
         }
 
         const float GamePiece::ANIM_DELAY = 0.005f;
+        const float GamePiece::ANIM_OVER_THRESHOLD = 0.999998f;
 
         GamePiece::GamePiece()
         {
-
+            // Intentionally left blank.
         }
 
         GamePiece::GamePiece(Texture2D* texture, glm::vec2 position, glm::vec2 destination)
             : m_Texture(texture), m_InitialPosition(position), m_Position(position), m_Destination(destination)
         {
-            // TODO: init clip rect y position to be random            
-
-            m_ClipRect.Y = RandInt(0, 7) * 64;
+            m_ClipRect.Y = RandInt(0, 7) * 64;   // there are 7 sprites for pieces, each with 64 width
 
             m_Tween = tweeny::from(position.x, position.y)
                 .to(destination.x, destination.y)
@@ -30,15 +29,19 @@ namespace MyChallengeGame
 
         GamePiece::~GamePiece()
         {
-
+            // Intentionally left blank.
         };
 
         void GamePiece::Update(float delta)
         {
+
+            // updating the animation consists in checking if we
+            // must step the tween. if so, advance in relative percentage
+
             if(m_AnimationStarted)
             {
-                deltaAcumulation += delta;
-                std::array<float, 2> result = m_Tween.step(deltaAcumulation / static_cast<float>(DURATION));
+                m_DeltaAcumulation += delta;
+                std::array<float, 2> result = m_Tween.step(m_DeltaAcumulation / static_cast<float>(DURATION));
                 
                 m_Position.x = result[0];
                 m_Position.y = result[1];
@@ -79,7 +82,6 @@ namespace MyChallengeGame
             m_Tween.seek(0); // resets the tween back
             m_AnimationStarted = false;            
             SetPosition(m_InitialPosition);
-            deltaAcumulation = 0;
+            m_DeltaAcumulation = 0;
         }
-
 }
