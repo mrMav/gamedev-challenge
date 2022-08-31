@@ -29,7 +29,7 @@ namespace MyChallengeGame
 
     void Button::Update(Camera2D* camera, float delta)
     {
-        // check mouse hittest
+        // check mouse hit-test
 
         Cursor cursor = Input::GetCursorPosition();
         glm::vec2 mouse = camera->ScreenToWorld(cursor.x, cursor.y);

@@ -77,7 +77,7 @@ namespace MyChallengeGame
 
         m_CreditsOutButton = Button(GetViewport().HalfWidth() - BUTTON_WIDTH - MARGIN, m_PlayButton.Position.y, m_Spritesheet,
             { 64, 128, BUTTON_WIDTH, BUTTON_HEIGHT },
-            { 64 + BUTTON_WIDTH, 128, BUTTON_WIDTH, BUTTON_HEIGHT },
+            { 64 + BUTTON_WIDTH, 64 * 2, BUTTON_WIDTH, BUTTON_HEIGHT },
             [=]()-> void
             {
                 m_AllCreditsOutCounter += m_CurrentCreditsCounter;
@@ -87,7 +87,7 @@ namespace MyChallengeGame
 
         m_CreditsInButton = Button(m_CreditsOutButton.Position.x - BUTTON_WIDTH - PADDING, m_PlayButton.Position.y, m_Spritesheet,
             { 64, 64, BUTTON_WIDTH, BUTTON_HEIGHT },
-            { 64 + BUTTON_WIDTH, 128, BUTTON_WIDTH, BUTTON_HEIGHT},
+            { 64 + BUTTON_WIDTH, 64, BUTTON_WIDTH, BUTTON_HEIGHT},
             [=]()-> void
             {
                 m_AllCreditsInCounter++;

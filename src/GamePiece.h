@@ -6,13 +6,19 @@ namespace MyChallengeGame
 {
     using namespace Engine;
 
+    // representation of a game piece
     class GamePiece
     {
 
         public:
 
+        // each individual piece animation duration
         static const int DURATION = 1000;
+
+        // the amount of delay before the other piece starts the animation
         static const float ANIM_DELAY;
+
+        // threshold for anim over check (in percent)
         static const float ANIM_OVER_THRESHOLD;
         
         GamePiece();
@@ -42,13 +48,15 @@ namespace MyChallengeGame
         glm::vec2 m_InitialPosition;
         glm::vec2 m_Position;
         glm::vec2 m_Destination;
+
         tweeny::tween<float, float> m_Tween;
         Rectangle<int> m_ClipRect = {0, 0, 64, 64};
         Texture2D* m_Texture;
+
         float m_AnimationStarted = false;
 
-        // timing
-        float deltaAcumulation = 0;
+        // used to accumulate time for animation progress
+        float m_DeltaAcumulation = 0;
 
     };
 
