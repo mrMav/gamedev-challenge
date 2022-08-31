@@ -207,7 +207,8 @@ namespace MyChallengeGame
 
                     if(pieces[i].TweenProgress() > GamePiece::ANIM_DELAY)
                     {
-                        pieces[i + 1].StartAnimation();
+                        if(i + 1 < MAX_INDEX)
+                            pieces[i + 1].StartAnimation();
                     }
 
                 }
