@@ -13,7 +13,7 @@ namespace MyChallengeGame
 
         GamePiece::GamePiece()
         {
-
+            // Intentionally left blank.
         }
 
         GamePiece::GamePiece(Texture2D* texture, glm::vec2 position, glm::vec2 destination)
@@ -29,7 +29,7 @@ namespace MyChallengeGame
 
         GamePiece::~GamePiece()
         {
-
+            // Intentionally left blank.
         };
 
         void GamePiece::Update(float delta)
@@ -84,5 +84,4 @@ namespace MyChallengeGame
             SetPosition(m_InitialPosition);
             m_DeltaAcumulation = 0;
         }
-
 }

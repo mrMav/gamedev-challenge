@@ -37,9 +37,7 @@ namespace MyChallengeGame
         bool m_Hover = false;
 
         std::function<void()> m_callback;
-
-
-
+        
     };
 
 }

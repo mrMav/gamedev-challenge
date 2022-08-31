@@ -1,15 +1,15 @@
 set(HEADERS
 ${HEADERS}
-ChallengeGame.h
 Button.h
+ChallengeGame.h
 GamePiece.h
 )
 
 set(SOURCE
 ${SOURCE}
-GamePiece.cpp
 Button.cpp
 ChallengeGame.cpp
+GamePiece.cpp
 Main.cpp
 )
 

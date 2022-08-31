@@ -44,7 +44,7 @@ namespace MyChallengeGame
         // create UI buttons:
         // button textures in the spritesheet have offsets of 64 and 128
 
-        // the margin adde to the UI elements around the edge of the window
+        // the margin added to the UI elements around the edge of the window
         const int MARGIN        = 36;        
         const int PADDING       = 24;
         const int BUTTON_WIDTH  = 128;
@@ -97,8 +97,7 @@ namespace MyChallengeGame
 
 
         // build animation:
-        // we will build a little animation consisting
-        // of game pieces falling into place one by one
+        // we will build a little animation consisting of game pieces falling into place one by one
         // we will create the pieces and tell them in which direction they should "fall"
         // -----
         // -6789
@@ -106,7 +105,7 @@ namespace MyChallengeGame
         // -432-
         // -----
         // 
-        // in the "sketch" above, piece 1 will move to the left, leavin a gap in its original
+        // in the "sketch" above, piece 1 will move to the left, leaving a gap in its original
         // place. piece 2 will then move up, filling the gap. Then piece 3 will move to the right
         // filling the gap left by number 2. 
 
@@ -144,9 +143,6 @@ namespace MyChallengeGame
 
     void ChallengeGame::Update(float delta)
     {
-
-        // in this function, we update all the game elements
-
         m_Camera->Update(delta);
 
         m_PlayButton.Update(m_Camera, delta);
@@ -187,8 +183,6 @@ namespace MyChallengeGame
         // so we must call the clear function directly to opengl...
         glClear(GL_COLOR_BUFFER_BIT);
         
-        // now we draw all our game elements
-
         // this spritebatch step will render everything that is in "world" coordinates
         m_Spritebatch->Begin(m_Shader, m_Camera, glm::vec4(1));
 

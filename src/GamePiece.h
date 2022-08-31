@@ -59,6 +59,4 @@ namespace MyChallengeGame
         float m_DeltaAcumulation = 0;
 
     };
-
-
 }

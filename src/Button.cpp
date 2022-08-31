@@ -1,7 +1,6 @@
 #include "Button.h"
 #include <algorithm>
 
-
 namespace MyChallengeGame
 {
 
@@ -22,9 +21,10 @@ namespace MyChallengeGame
         m_callback = std::bind(callback);
 
     }
+
     Button::~Button()
     {
-        
+        // Intentionally left blank.
     }
 
     void Button::Update(Camera2D* camera, float delta)
